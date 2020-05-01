@@ -48,12 +48,10 @@ class Application(Frame):
 
         Frame.__init__(self,master)
         self.grid()
-
         self.Memory = load_Memory()
         self.Pos = self.Memory['Pos']
         self.create_widgets()
-        #self.var = StringVar()
-        #self.var.set('1')
+
         self.value = 1
         
         
@@ -229,8 +227,6 @@ class Application(Frame):
 
         
     def set_filter(self):
-
-
         try:
             to_change = self.CB.get()
         except:
@@ -250,16 +246,19 @@ class Application(Frame):
        
         self.ser.write(msg.encode())
 
-        time.sleep(1)
+        time.sleep(0.1)
 
         readOut = self.ser.readline().decode()
 
-        time.sleep(0.1)
-        print ("Arduino Received: ",  readOut)
-        self.Memory['Pos']= '0'
-        save_Memory(self.Memory)
-        self.update()                
-
+    
+        print ("Arduino turned: "+  str(readOut)+ " degrees")
+        if(str(readOut.rstrip())!=""):
+            pos = float(self.Pos) + float(readOut.rstrip())
+            self.Memory['Pos']= str(pos)
+            save_Memory(self.Memory)
+            self.update()                
+        else:
+            print("Arduino did not move")
 
     def spin_left(self,event):
         self.ser.reset_input_buffer()
@@ -269,57 +268,31 @@ class Application(Frame):
        
         self.ser.write(msg.encode())
 
-        time.sleep(1)
+        # time.sleep(1)
 
-        readOut = self.ser.readline().decode()
+        # readOut = self.ser.readline().decode()
 
-        time.sleep(0.1)
-        print ("Arduino Received: ",  readOut)
-        self.Memory['Pos']= '0'
-        save_Memory(self.Memory)
-        self.update()                
-
+        # time.sleep(0.1)
+                      
 
     def spin_right(self,event):
         self.ser.reset_input_buffer()
         self.ser.reset_output_buffer()        
         msg = "Right\n"       
         print("Sending: " + msg)
-    
         self.ser.write(msg.encode())
-
-        time.sleep(1)
-
-        readOut = self.ser.readline().decode()
-
-        time.sleep(0.1)
-        print ("Arduino Received: ",  readOut)
-        self.Memory['Pos']= '0'
-        save_Memory(self.Memory)
-        self.update()                
+        # time.sleep(1)
+        # readOut = self.ser.readline().decode()
+        # time.sleep(0.1)
+                 
 
     def Go_to_zero(self):
 
         self.ser.reset_input_buffer()
         self.ser.reset_output_buffer()
-
-        #commandToSend = int(self.Pos)*-1
-
-        
-        #self.text.insert(0.0, commandToSend)
-
-        
         msg = "Zero\n"       
         print("Sending: " + msg)
-       
         self.ser.write(msg.encode())
-
-        time.sleep(1)
-
-        readOut = self.ser.readline().decode()
-
-        time.sleep(0.1)
-        print ("Arduino Received: ",  readOut)
         self.Memory['Pos']= '0'
         save_Memory(self.Memory)
         self.update()
@@ -345,13 +318,14 @@ class Application(Frame):
         ports = list(serial.tools.list_ports.comports())
 
         for p in ports:
-                print(p)
-                if (p[1] == 'USB-SERIAL CH340 (COM3)'):
+                print(p[0])
+                print(p[1])
+                if (p[1] == 'USB2.0-Serial'):
                             
                         COMPort = p[0]
         try:
-            self.ser = serial.Serial(COMPort, 9600 , timeout = 1)
-
+            
+            self.ser = serial.Serial(p[0], 9600 , timeout = 1)
             if(self.ser):
                 self.inc_button['state'] = 'normal'
                 self.dec_button['state'] = 'normal'
@@ -377,27 +351,17 @@ class Application(Frame):
         self.ser.reset_output_buffer()
 
         filt = self.CB.get() 
-
         print("Sending to position: " + self.Memory[filt] + ' para filtro: ' + filt)
-        
+        #print("FIlter value is: ", filt)
         commandToSend = str(int(self.Memory[filt]) - int(self.Pos))
-        
-        #print("Sending: " + str(self.Memory[filt]) + '  filter :' + str(filt))
-        #self.text.insert(0.0, commandToSend)
-
-        
-        msg = commandToSend          
-        #print("Sending: " + msg)
-       
+        msg = commandToSend           
         self.ser.write(msg.encode())
-
         time.sleep(1)
-
         readOut = self.ser.readline().decode('ascii')
         time.sleep(0.1)
         print ("Arduino Received: ",  readOut)
-        val = int(self.Pos)+ int(readOut)
-        self.Pos= str(val)
+        #val = int(self.Pos)+ int(readOut)
+        self.Pos= str(self.Memory[filt])
         self.Memory['Pos'] = self.Pos
         #self.ser.reset_output_buffer() #flush the buffer
         save_Memory(self.Memory)
@@ -409,29 +373,16 @@ class Application(Frame):
     def Arduino_COM(self):
         
         self.ser.reset_input_buffer()
-        self.ser.reset_output_buffer()
-
-        
-        commandToSend = str(int(self.address.get()) - int(self.Pos))
-        
-        
-        #self.text.insert(0.0, commandToSend)
-
-        
+        self.ser.reset_output_buffer()      
+        commandToSend = str(float(self.address.get()) - float(self.Pos))
         msg = str(commandToSend)          
-        print("Sending: " + msg)
-       
         self.ser.write(msg.encode())
-
         time.sleep(1)
-
         readOut = self.ser.readline().decode('ascii')
         time.sleep(0.1)
-        print ("Arduino Received: ",  readOut)
-        val = int(self.Pos)+ int(readOut)
+        val = float(self.Pos)+ float(msg)
         self.Pos= str(val)
         self.Memory['Pos'] = self.Pos
-        #self.ser.reset_output_buffer() #flush the buffer
         save_Memory(self.Memory)
         self.update()
 
@@ -440,27 +391,15 @@ class Application(Frame):
         
         self.ser.reset_input_buffer()
         self.ser.reset_output_buffer()
-
         commandToSend = self.address.get()
-
-        
-        #self.text.insert(0.0, commandToSend)
-
-        #self.Pos+=self.value
         msg = str(self.value)          
-        print("Sending: " + msg)
-       
         self.ser.write(msg.encode())
-
         time.sleep(1)
-
         readOut = self.ser.readline().decode('ascii')
         time.sleep(0.1)
-        print ("Arduino Received: ",  readOut)
-        val = int(self.Pos)+ int(readOut)
+        val = float(self.Pos)+ float(msg)
         self.Pos= str(val)
         self.Memory['Pos'] = self.Pos
-        #self.ser.reset_output_buffer() #flush the buffer
         save_Memory(self.Memory)
         self.update()
         
@@ -468,30 +407,17 @@ class Application(Frame):
         
         self.ser.reset_input_buffer()
         self.ser.reset_output_buffer()
-
         commandToSend = self.address.get()
-
-        
-        #self.text.insert(0.0, commandToSend)
-
-        #self.Pos+=self.value
         msg = str(0-self.value)          
-        print("Sending: " + msg)
-       
         self.ser.write(msg.encode())
-
         time.sleep(1)
-
         readOut = self.ser.readline().decode('ascii')
         time.sleep(0.1)
-        print ("Arduino Received: ",  readOut)
-        val = int(self.Pos)+ int(readOut)
+        val = float(self.Pos)+ float(msg)
         self.Pos= str(val)
         self.Memory['Pos'] = self.Pos
-        #self.ser.reset_output_buffer() #flush the buffer
         save_Memory(self.Memory)
         self.update()
-
 
 
     def update(self):

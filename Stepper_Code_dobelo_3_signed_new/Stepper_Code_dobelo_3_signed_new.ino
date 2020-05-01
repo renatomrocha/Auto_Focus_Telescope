@@ -3,6 +3,7 @@ int motorPin21 = 5;
 int motorPin31 = 9;
 int motorPin41 = 10;
 float stepspdegree = 900.0/360.0;
+float degreesSteps = 360.0/900.0;
 
 bool zeroing = false; 
 
@@ -44,7 +45,6 @@ void setup() {
 
 
 void loop() {
-Serial.println("Init");
 while(Serial.available()==0){
   if(turnRight==true){
     continuousRight();
@@ -56,29 +56,23 @@ while(Serial.available()==0){
 }  
   serialEvent();
   
-  Serial.println(inputString);
 
 if(inputString.equals("Zero\n")){
-  Serial.println("Vou zerar");
   zeroing = true;
   zero();
 }
 else if(inputString.equals("Right\n")){
   turnRight = true;
   continuousRight();
-  Serial.println("Vou virar para a direita");
 }
 else if(inputString.equals("Left\n")){
   turnLeft = true;
   continuousLeft();
-  Serial.println("Vou virar para a esquerda");
 }  
 else if(inputString.equals("Stop\n")){
   turnLeft=false;
   turnRight=false;
-  Serial.println("Vou parar");
-  Serial.print("Rodei: ");
-  Serial.println(stepsExecutados);
+  Serial.println(stepsExecutados* degreesSteps);
   stepsExecutados = 0;
 }  
 else{
@@ -88,26 +82,21 @@ else{
 }
 
 void continuousRight(){
-  Serial.println("-->");
   cycle();
   stepsExecutados++;
 }
 
 
 void continuousLeft(){
-  Serial.println("<--"); 
   rev_cycle();
-  stepsExecutados++;
+  stepsExecutados--;
 }
 
 
 void turnDegrees(){
   
   graus = inputString.toInt();
-  Serial.print("Vou rodar em graus: " );
-  Serial.println(graus);
   steps = int(graus * stepspdegree);
-  
   i = 0;
   
 
@@ -135,8 +124,8 @@ void service(){
 
 void zero(){
   while(zeroing){
-  rev_cycle();  
-  Serial.println(zeroing);
+  rev_cycle();
+  Serial.println("Zeroing");  
   }
 }
 
